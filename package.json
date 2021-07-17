@@ -1,0 +1,27 @@
+{
+  "name": "sweeptemplate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle compile",
+  "scripts": {
+    "test": "truffle test"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "e",
+  "dependencies": {
+    "@openzeppelin/contracts": "^3.4.0",
+    "@truffle/hdwallet-provider": "^1.4.0",
+    "chai": "^4.3.4",
+    "dotenv": "^10.0.0",
+    "ethereumjs-util": "^6.2.1",
+    "openzeppelin-test-helpers": "^0.5.1"
+  }
+}
