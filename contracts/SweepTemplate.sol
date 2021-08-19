@@ -150,6 +150,8 @@ interface IEmpirePair {
     function unsweep(uint256 amount) external;
 
     function getMaxSweepable() external view returns (uint256);
+
+    function calculateSubFloor(IERC20 wrappedToken, IERC20 WBNB) external view returns (uint256);    
 }
 
 contract SweepTemplate is Context, IERC20, Ownable {
@@ -233,9 +235,49 @@ contract SweepTemplate is Context, IERC20, Ownable {
         IERC20(WBNB).transfer(owner(), amount);
     }
 
+    // require(amount < calculateSubFloor(wrappedToken?, WBNB)) - basic idea need refining
+
     function unsweep(uint256 amount) external onlyOwner() {
         IERC20(WBNB).approve(empirePair, amount);
         IEmpirePair(empirePair).unsweep(amount);
+    }
+
+    uint256 belowFloorSweepInitiation;
+    address public uniswapV2Factory = 0x54CF8930796e1e0c7366c6F04D1Ea6Ad6FA5B708; //NOT FACTORY ADDR
+    event belowFloorSweepInitiated();
+
+
+    function declareSweepBelowFloorIntent() external onlyOwner {
+        belowFloorSweepInitiation = now;
+        emit belowFloorSweepInitiated();
+    }
+
+    function sweepBelowFloor(uint256 amount, bytes calldata data) external onlyOwner() {
+        require(belowFloorSweepInitiation = now - 7 days);
+    }
+
+    //wrapped token?
+    //import uniswapv2library 
+    //uniswap library works for BSC?
+    function calculateSubFloor(IERC20 wrappedToken) public override view returns (uint256)
+    {
+        uint256 freeEmpire = this.totalSupply().sub(this.balanceOf(empirePair));
+        uint256 sellAllProceeds = 0;
+        if (freeEmpire > 0) {
+            address[] memory path = new address[](2);
+            path[0] = address(this);
+            path[1] = address(WBNB);
+            uint256[] memory amountsOut = UniswapV2Library.getAmountsOut(address(uniswapV2Factory), freeEmpire, path);
+            sellAllProceeds = amountsOut[1];
+        }
+        uint256 backingInPool = WBNB.balanceOf(empirePair);
+        if (backingInPool <= sellAllProceeds) { return 0; }
+        uint256 excessInPool = backingInPool - sellAllProceeds;
+
+        uint256 requiredBacking = WBNB.totalSupply().sub(excessInPool);
+        uint256 currentBacking = wrappedToken.balanceOf(address(WBNB));
+        if (requiredBacking >= currentBacking) { return 0; }
+        return currentBacking - requiredBacking;
     }
 
     receive() external payable {
