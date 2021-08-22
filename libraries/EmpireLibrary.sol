@@ -2,7 +2,7 @@
 
 pragma solidity =0.7.6;
 
-import "../../interfaces/IEmpirePair.sol";
+import "../interfaces/IEmpirePair.sol";
 
 import "../common/EmpireMath.sol";
 
