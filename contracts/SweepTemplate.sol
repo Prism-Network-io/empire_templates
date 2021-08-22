@@ -37,6 +37,7 @@ contract EmpireTemplateSweepable is Context, IERC20, Ownable {
     using SafeMath for uint256;
 
     event sweepBelowFloorIntent();
+    event sweptBelowFloor(uint256 amountSwept);
 
    constructor(uint256 total, address tester) {
         totalSupply_ = total;
@@ -102,7 +103,7 @@ contract EmpireTemplateSweepable is Context, IERC20, Ownable {
     
     // Allows for Owner to sweep any tokens above the price floor
     function sweep(uint256 amount, bytes calldata data) external onlyOwner() {
-        require(amount < calculateSubFloor()); // REQUIRE THE SWEEP WILL NOT TAKE BELOW THE FLOOR
+        require(amount < calculateSubFloor(), "Attempting to Sweep below the price floor"); // REQUIRE THE SWEEP WILL NOT TAKE BELOW THE FLOOR
         IEmpirePair(empirePair).sweep(amount, data);
     }
 
@@ -120,13 +121,16 @@ contract EmpireTemplateSweepable is Context, IERC20, Ownable {
     // Allows for Owner to begin the process to sweep below the floor, requires 7 days wait after initiating
     function beginSweepBelowFloor() external onlyOwner() {
         belowFloorSweepStart = block.timestamp;
+        emit sweepBelowFloorIntent();
     }
 
     // Allows for Owner to sweep tokens below the price floor. Must be called after 7 days of calling beginSweepBelowFloor and only available for 1 Day
     function sweepBelowFloor(uint256 amount, bytes calldata data) external onlyOwner() {
-        require(belowFloorSweepStart + 7 days > block.timestamp && belowFloorSweepStart + 8 days < block.timestamp);   //double check logic here
+        require(belowFloorSweepStart + 7 days > block.timestamp, "Attempting to Sweep below the price floor before 7 days have expired");
+        require(belowFloorSweepStart + 8 days < block.timestamp, "Attempting to Sweep below the price floor after 8 days, re-declare intent to sweep below floor");   //double check logic here, add error notes
         belowFloorSweepStart = 0;
         IEmpirePair(empirePair).sweep(amount, data);
+        emit sweptBelowFloor(amount);
     }
 
     // Calculates the price floor of the token, which is determined by finding how much of the backing token would be left if all holders sold their tokens
@@ -207,7 +211,6 @@ contract EmpireTemplateSweepable is Context, IERC20, Ownable {
         uint256 excessBackingInPool = backingInPool - sellAllProceeds;
 
         return excessBackingInPool;
-
     }
 
     receive() external payable {
