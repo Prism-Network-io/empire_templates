@@ -11,16 +11,15 @@ import "../interfaces/IEmpirePair.sol";
 import "../interfaces/IEmpireFactory.sol";
 import "../interfaces/IEmpireRouter.sol";
 
-contract EmpireTemplateSweepable is Context, IERC20, Ownable {
+contract EmpireTemplateCommon is Context, IERC20, Ownable {
 
     string public constant name = "EMPIRE_TEMPLATE";
-    string public constant symbol = "TEST_SWEEP_1";
+    string public constant symbol = "POOLA";
     uint8 public constant decimals = 18;
     
     // EMPIRE EDITS
     address public empirePair;
-    // address public WBNB = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
-    address public WBNB = 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd; //TESTNET
+    address public WBNB = 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd;
 
     mapping(address => uint256) balances;
 
@@ -28,17 +27,16 @@ contract EmpireTemplateSweepable is Context, IERC20, Ownable {
 
     uint256 totalSupply_;
 
-    // uint256 public pairType = 3;
-
     using SafeMath for uint256;
 
-   constructor(uint256 total, address tester) {
-        totalSupply_ = total;
-        balances[tester] = totalSupply_;
+   constructor() public {
+        totalSupply_ = 10000 ether;
+        balances[msg.sender] = totalSupply_;
 
         IEmpireRouter _empireRouter = IEmpireRouter(0xCfAA4334ec6d5bBCB597e227c28D84bC52d5B5A4);
         empirePair = IEmpireFactory(_empireRouter.factory())
-            .createEmpirePair(_empireRouter.WETH(), address(this), PairType.SweepableToken0, 0);
+            .createPair(address(this), _empireRouter.WETH());
+
 
     }
 
